@@ -66,8 +66,17 @@ User: "Yes, go ahead."
 Agent: (calls create_expert("cvss-v4", urls=[...], auto=True))
        → Expert created.
        → Catalog generated.
+       → Skill generated.
        → "Done. You can now ask questions like:
           'Ask the cvss-v4 expert how the base score is calculated'"
+
+### Suggested next steps (when create_expert returns without --auto)
+
+When `create_expert` returns `suggested_next_steps`, inform the user and ask
+if they want to proceed with catalog and/or skill generation. For each step:
+- Read the description aloud
+- Ask "Would you like me to do that?"
+- **NEVER** execute these steps without user confirmation.
 
 User: "Ask cvss-v4 how PR is scored"
 

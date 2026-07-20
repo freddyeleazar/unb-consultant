@@ -92,6 +92,11 @@ _STRINGS = {
         "merger_auto_merged": "{count} files < 50KB merged into {groups} groups.",
         "merger_target": "Target: {target} sources ({pct}% of {limit}).",
 
+        # Suggestions
+        "suggest_catalog": "Generate a thematic catalog of what this expert knows",
+        "suggest_skill_gen": "Create a local SKILL.md and update AGENTS.md for this project",
+        "next_steps": "Next steps:",
+
         # Generic errors
         "error_network": "Network error: {msg}. Check your connection.",
         "error_timeout": "Operation timed out after {seconds}s.",
@@ -180,6 +185,11 @@ _STRINGS = {
         "merger_auto_individual": "{count} archivos > 50KB mantenidos individualmente.",
         "merger_auto_merged": "{count} archivos < 50KB fusionados en {groups} grupos.",
         "merger_target": "Objetivo: {target} fuentes ({pct}% de {limit}).",
+
+        # Suggestions
+        "suggest_catalog": "Generar un cat\u00e1logo tem\u00e1tico de lo que sabe este experto",
+        "suggest_skill_gen": "Crear un SKILL.md local y actualizar AGENTS.md para este proyecto",
+        "next_steps": "Siguientes pasos:",
 
         # Generic errors
         "error_network": "Error de red: {msg}. Verifica tu conexión.",

@@ -156,6 +156,13 @@ def expert_create(name, desc, url, files, directory, drive_doc,
         click.echo(_("aborted"))
         sys.exit(0)
 
+    # Show suggested next steps
+    suggested = result.get("suggested_next_steps")
+    if suggested:
+        click.echo(f"\n{_('next_steps')}")
+        for step in suggested:
+            click.echo(f"  \u2022 {step['description']}: {step['command']}")
+
 
 @expert.command("list")
 def expert_list():

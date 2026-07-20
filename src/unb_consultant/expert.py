@@ -220,6 +220,20 @@ def create_expert(
         "sources_failed": len(failed_sources),
     }
 
+    if not auto:
+        result_data["suggested_next_steps"] = [
+            {
+                "tool": "catalog",
+                "command": f'unb catalog "{name}"',
+                "description": _("suggest_catalog"),
+            },
+            {
+                "tool": "skill-gen",
+                "command": f'unb skill-gen "{name}"',
+                "description": _("suggest_skill_gen"),
+            },
+        ]
+
     print()
     print(_("expert_created", name=name))
     print(_("expert_notebook", id=notebook_id))
