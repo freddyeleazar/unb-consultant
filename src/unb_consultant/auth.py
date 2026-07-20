@@ -18,7 +18,7 @@ def _notebooklm_cmd(*args) -> subprocess.CompletedProcess:
     cmd = ["notebooklm"] + list(args)
     try:
         return subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120
+            cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=120
         )
     except FileNotFoundError:
         raise RuntimeError(

@@ -138,6 +138,15 @@ Agent: → unb ask "0ad-modding-reference" "How does VFS work?" --json
        → Returns answer with citations
 ```
 
+### Error handling
+
+If `unb` returns an error:
+1. Report the error message to the user concisely
+2. Suggest `unb auth refresh` if auth-related, or `unb login` if persistent
+3. Do NOT read unb's source code to debug internal errors
+4. Do NOT try to fix unb's internal issues
+5. Just report and suggest alternatives
+
 ## Installation (for user reference)
 
 ```bash
