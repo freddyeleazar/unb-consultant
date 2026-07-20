@@ -404,6 +404,31 @@ def mcp():
         sys.exit(1)
 
 
+# ─── Init command ───
+
+@cli.command()
+@click.option("--auto", is_flag=True, help="Auto-confirm all decisions")
+@click.option("--dry-run", is_flag=True, help="Preview actions without writing")
+@click.option("--path", type=click.Path(exists=True, file_okay=False),
+              help="Project directory (default: current)")
+def init(auto, dry_run, path):
+    """Initialize current project for unb-consultant.
+
+    Creates .opencode/skills/unb-consultant/SKILL.md and AGENTS.md
+    entries so agents without MCP support can discover and use unb.
+    """
+    from unb_consultant.init import init_project as _init
+
+    result = _init(path=path, auto=auto, dry_run=dry_run)
+
+    if result.get("status") == "error":
+        click.echo(f"{_('error')}: {result['error']}", err=True)
+        sys.exit(1)
+    elif result.get("status") == "aborted":
+        click.echo(_("aborted"))
+        sys.exit(0)
+
+
 # ─── Setup command ───
 
 @cli.command()

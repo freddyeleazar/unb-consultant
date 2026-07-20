@@ -111,7 +111,22 @@ CLI commands directly via the bash tool instead:
 4. NEVER execute destructive commands (delete, overwrite) without user confirmation.
 5. Use `--json` with `ask` to get structured answers with source citations.
 
-### Example (no MCP)
+### Project not initialized (no unb in this project)
+
+If the project does not have unb-consultant configured and you cannot use
+MCP tools, suggest running `unb init` first:
+
+```
+User: "List available experts"
+Agent: "This project does not have unb-consultant configured.
+        Would you like me to run `unb init` to set it up?"
+User: "Yes"
+Agent: → unb init --auto
+       → unb expert list
+       → Shows table of registered experts
+```
+
+### Example (already initialized)
 
 ```
 User: "List available experts"

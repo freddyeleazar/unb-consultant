@@ -12,8 +12,11 @@ Use them directly: `create_expert`, `ask_expert`, `list_experts`, etc.
 They are faster and return structured data.
 
 ### If MCP tools are NOT available (fallback)
-Use the CLI commands from the table below via the bash tool.
-See SKILL.md for the full equivalence table.
+
+First check if unb-consultant is configured in this project:
+- Look for `.opencode/skills/unb-consultant/SKILL.md`
+- If it does NOT exist, suggest running `unb init` to set it up.
+- If it DOES exist, use the CLI commands from the table below.
 
 | Task | MCP Tool | CLI Fallback |
 |------|----------|-------------|
@@ -53,3 +56,16 @@ See SKILL.md for the full equivalence table.
 ## Language
 
 The CLI auto-detects your locale. Override with `--lang en` or `UNB_LANG=es`.
+
+## unb-consultant (NotebookLM Expert)
+
+Available CLI commands (for models without MCP support):
+
+| Task | Command |
+|------|---------|
+| List experts | `unb expert list` |
+| Ask expert | `unb ask "<name>" "<question>"` |
+| Create expert | `unb expert create "<name>" --url "..."` |
+| Suggest domain | `unb suggest <keyword>` |
+
+The file `.opencode/skills/unb-consultant/SKILL.md` has the full reference.
