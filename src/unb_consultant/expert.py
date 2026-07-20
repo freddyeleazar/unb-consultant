@@ -51,14 +51,41 @@ def create_expert(
         else:
             return {"status": "error", "error": _("expert_name_taken", name=name)}
 
+    # Detect tier (no network call)
+    tier, limit = detect_tier()
+
+    # Early return for dry-run (no auth needed)
+    if dry_run:
+        raw_files: list[Path] = []
+        if files:
+            for f_arg in files:
+                p = Path(f_arg)
+                if p.exists():
+                    raw_files.append(p)
+        if directory:
+            d = Path(directory)
+            if d.is_dir():
+                for ext in ("*.md", "*.txt", "*.pdf", "*.rst"):
+                    raw_files.extend(sorted(d.glob(ext)))
+                raw_files = list(dict.fromkeys(raw_files))
+        if raw_files:
+            from unb_consultant.merger import plan_merge, print_plan_summary
+            target = get_target_source_count()
+            url_count = len(urls) if urls else 0
+            file_target = max(1, target - url_count)
+            plan = plan_merge(raw_files, target_count=file_target, tier_limit=limit)
+            print_plan_summary(plan)
+        else:
+            print("Dry-run: no local files to merge. URLs will be uploaded directly.")
+            print(f"Tier: {tier.upper()} ({limit} sources limit)")
+        return {"status": "dry_run", "plan": str(plan) if raw_files else "urls-only"}
+
     # Auth check
     print(_("auth_checking"))
     check = auth_check(test=True)
     if check.get("status") != "ok" or not check.get("checks", {}).get("token_fetch"):
         return {"status": "error", "error": _("auth_expired")}
 
-    # Detect tier
-    tier, limit = detect_tier()
     print(format_tier_info())
     print()
 
@@ -100,10 +127,6 @@ def create_expert(
                 limit=limit,
                 free=limit - plan.merged_count - url_count))
         print()
-
-        if dry_run:
-            print_plan_summary(plan)
-            return {"status": "dry_run", "plan": str(plan)}
 
         if not yes and not auto:
             print_plan_summary(plan)
