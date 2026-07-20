@@ -283,6 +283,30 @@ def ask(name, question, json_output):
         click.echo(result.get("answer", ""))
 
 
+# ─── Suggest command ───
+
+@cli.command()
+@click.argument("keywords", nargs=-1, required=True)
+def suggest(keywords):
+    """Suggest domain matches for creating an expert.
+
+    KEYWORDS: Domain keywords to match (e.g. cvss musicxml skyrim).
+    """
+    from unb_consultant.mcp_server import suggest_experts
+
+    result = suggest_experts(domain_keywords=list(keywords))
+
+    if result.get("matched"):
+        click.echo(f"Found {len(result['suggestions'])} domain match(es):")
+        for s in result["suggestions"]:
+            click.echo(f"  \u2022 {s['domain']} ({s['rationale']})")
+            if s.get("recommended_sources"):
+                src = s["recommended_sources"][0]
+                click.echo(f"    unb expert create \"{s['suggested_name']}\" --url \"{src}\"")
+    else:
+        click.echo(result.get("message", "No domain matches found."))
+
+
 # ─── Catalog command ───
 
 @cli.command()
