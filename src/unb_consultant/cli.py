@@ -165,13 +165,18 @@ def expert_create(name, desc, url, files, directory, drive_doc,
 
 
 @expert.command("list")
-def expert_list():
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+def expert_list(json_output):
     """List all registered experts."""
-    experts = list_experts()
+    experts = list_experts(json_output=json_output)
     if not experts:
         click.echo(_("expert_list_empty"))
         return
-    click.echo(format_expert_table(experts))
+    if json_output:
+        import json as _json
+        click.echo(_json.dumps(experts, indent=2))
+    else:
+        click.echo(format_expert_table(experts))
 
 
 @expert.command("adopt")

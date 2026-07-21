@@ -269,8 +269,11 @@ def create_expert(
     return result_data
 
 
-def list_experts() -> list[dict]:
+def list_experts(json_output: bool = False) -> list[dict]:
     """List all registered experts.
+    
+    Args:
+        json_output: If True, include full metadata for JSON serialization.
     
     Returns list of expert dicts.
     """
@@ -278,14 +281,16 @@ def list_experts() -> list[dict]:
     experts = config.list_experts()
     result = []
     for name, data in sorted(experts.items()):
-        result.append({
+        entry = {
             "name": name,
             "notebook_id": data.get("notebook_id", ""),
             "description": data.get("description", ""),
             "sources": data.get("sources_count", 0),
+            "tier": data.get("tier", None),
             "created_at": data.get("created_at", ""),
-            "catalog": data.get("catalog", {}).get("generated_at"),
-        })
+            "catalog_generated_at": data.get("catalog", {}).get("generated_at"),
+        }
+        result.append(entry)
     return result
 
 
@@ -351,7 +356,7 @@ def format_expert_table(experts: list[dict]) -> str:
     for exp in experts:
         name = exp["name"]
         src = str(exp.get("sources", 0))
-        tier = exp.get("tier", "?")
+        tier = exp.get("tier") or "?"
         created = (exp.get("created_at", "") or "")[:10]
         lines.append(f"  {name:<25} {src:>8} {tier:<8} {created:<20}")
 
