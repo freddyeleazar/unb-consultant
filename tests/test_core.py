@@ -1,14 +1,38 @@
 """Tests for unb-consultant core modules."""
 
 import json
+import shutil
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from unb_consultant.i18n import _, set_lang, Translator, get_lang
-from unb_consultant.config import Config, reset_config, get_config
+from unb_consultant.config import Config, reset_config, get_config, CONFIG_PATH
 from unb_consultant.merger import plan_merge, execute_merge, _extract_keywords, _keyword_affinity
+
+
+# Module-level backup of the real config (taken ONCE before any test runs)
+_CONFIG_BACKUP = CONFIG_PATH.read_bytes() if CONFIG_PATH.exists() else None
+
+
+@pytest.fixture(autouse=True)
+def isolate_config():
+    """Backup and restore the real config file around each test.
+    
+    Tests must NEVER write to the real config file. This fixture
+    ensures isolation by backing up the real config once at module
+    load time and restoring it after each test.
+    """
+    reset_config()
+    yield
+    reset_config()
+    if _CONFIG_BACKUP is not None:
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        CONFIG_PATH.write_bytes(_CONFIG_BACKUP)
+    else:
+        if CONFIG_PATH.exists():
+            CONFIG_PATH.unlink()
 
 
 class TestI18n:

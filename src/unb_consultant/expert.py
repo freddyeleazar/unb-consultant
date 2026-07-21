@@ -17,7 +17,7 @@ from unb_consultant.auth import _notebooklm_cmd, auth_check
 from unb_consultant.config import get_config
 from unb_consultant.i18n import _
 from unb_consultant.merger import plan_merge, execute_merge, print_plan_summary
-from unb_consultant.tier import detect_tier, get_source_limit, get_target_source_count
+from unb_consultant.tier import detect_tier, cache_tier, get_source_limit, get_target_source_count
 
 
 def create_expert(

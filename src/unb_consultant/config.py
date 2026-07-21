@@ -1,12 +1,13 @@
 """Configuration manager for unb-consultant.
 
 Stores registered experts and global settings in ~/.unb-consultant/config.json.
+Uses atomic writes and in-memory tier/lang caching to prevent stale overwrites.
 """
 
 import json
 import os
+import tempfile
 from pathlib import Path
-from datetime import datetime
 
 CONFIG_DIR = Path.home() / ".unb-consultant"
 CONFIG_PATH = CONFIG_DIR / "config.json"
@@ -36,9 +37,19 @@ class Config:
                 pass
 
     def save(self):
+        """Atomic write: write to .tmp file, then rename to final path."""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2, ensure_ascii=False)
+        tmp = CONFIG_PATH.with_suffix(".tmp")
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=2, ensure_ascii=False)
+            tmp.replace(CONFIG_PATH)
+        finally:
+            if tmp.exists():
+                try:
+                    tmp.unlink()
+                except OSError:
+                    pass
 
     @property
     def lang(self) -> str | None:
@@ -47,7 +58,7 @@ class Config:
     @lang.setter
     def lang(self, value: str | None):
         self._data["lang"] = value
-        self.save()
+        # NOT persisted automatically - only saved with explicit save()
 
     @property
     def tier(self) -> str | None:
@@ -55,6 +66,12 @@ class Config:
 
     @tier.setter
     def tier(self, value: str | None):
+        self._data["tier"] = value
+        # NOT persisted automatically - only saved with explicit save()
+        # This prevents detect_tier() from triggering a stale config overwrite.
+
+    def persist_tier(self, value: str | None):
+        """Persist tier to disk explicitly."""
         self._data["tier"] = value
         self.save()
 
@@ -111,6 +128,5 @@ def get_config() -> Config:
 def reset_config():
     global _config
     _config = None
-    import os as _os
     if CONFIG_PATH.exists():
-        _os.remove(CONFIG_PATH)
+        os.remove(CONFIG_PATH)
