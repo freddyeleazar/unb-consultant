@@ -157,10 +157,15 @@ def generate_skill(
     no_agents: bool = False,
     dry_run: bool = False,
     update: bool = False,
+    project_path: str | None = None,
 ) -> dict:
     """Generate a SKILL.md file for an expert.
     
     Detects project structure and handles conflicts.
+    
+    Args:
+        project_path: Project root directory for skill creation.
+                      Defaults to current directory.
     """
     config = get_config()
     expert = config.get_expert(name)
@@ -179,7 +184,7 @@ def generate_skill(
     else:
         # Auto-detect project structure
         print(_("skill_detecting"))
-        structure = detect_project_structure()
+        structure = detect_project_structure(path=project_path or ".")
 
         if not structure["skills_dir"]:
             if dry_run:

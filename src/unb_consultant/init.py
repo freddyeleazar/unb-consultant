@@ -89,21 +89,34 @@ def _agents_block_with_skills() -> str:
     return AGENTS_UNB_BLOCK.format(skills_list=skills)
 
 
+def _missing_skills(skills_base: Path, expert_names: list[str]) -> list[str]:
+    """Return expert names that don't have a local skill yet."""
+    missing = []
+    for name in expert_names:
+        skill_path = skills_base / f"unb-{name}" / "SKILL.md"
+        if not skill_path.exists():
+            missing.append(name)
+    return missing
+
+
 def init_project(
     path: str | None = None,
     auto: bool = False,
     dry_run: bool = False,
 ) -> dict:
     """Initialize a project to use unb-consultant.
-    
+
     Creates skill files and AGENTS.md entries so that agents without
     MCP support can discover and use unb-consultant commands.
-    
+
+    This function is RE-EVALUABLE: running it multiple times only processes
+    experts that don't yet have local skills. Existing skills are preserved.
+
     Args:
         path: Project directory. Defaults to current directory.
         auto: Auto-confirm all decisions.
         dry_run: Preview what would be done without writing files.
-    
+
     Returns:
         dict with result.
     """
@@ -127,7 +140,7 @@ def init_project(
             skills_base.mkdir(parents=True, exist_ok=True)
         actions.append(f"Create {skills_base}")
 
-    # ─── Step 2: Write SKILL.md ───
+    # ─── Step 2: Write/update unb-consultant SKILL.md ───
     skill_dir = skills_base / "unb-consultant"
     skill_path = skill_dir / "SKILL.md"
 
@@ -155,14 +168,33 @@ def init_project(
             skill_path.write_text(UNB_SKILL_CONTENT, encoding="utf-8")
             actions.append(f"Created {skill_path}")
 
-    # ─── Step 3: Handle AGENTS.md ───
+    # ─── Step 3: Handle AGENTS.md (create or update) ───
     agents_path = project / "AGENTS.md"
     block_content = _agents_block_with_skills()
 
     if agents_path.exists():
         content = agents_path.read_text(encoding="utf-8", errors="replace")
         if AGENTS_UNB_BLOCK_HEADER in content:
-            actions.append("AGENTS.md already has unb-consultant block. Skipping.")
+            if dry_run:
+                actions.append(f"Would check AGENTS.md block (exists)")
+            else:
+                # Check if block lists all current experts
+                config = get_config()
+                experts = config.list_experts()
+                all_listed = True
+                for name in experts:
+                    if f"unb-{name}" not in content:
+                        all_listed = False
+                        break
+                if not all_listed:
+                    # Replace existing block with updated one
+                    import re
+                    pattern = re.compile(rf"\n{re.escape(AGENTS_UNB_BLOCK_HEADER)}.+?(?=\n##|\Z)", re.DOTALL)
+                    new_content = pattern.sub(block_content, content)
+                    agents_path.write_text(new_content, encoding="utf-8")
+                    actions.append("Updated AGENTS.md with current skill list")
+                else:
+                    actions.append("AGENTS.md already up to date")
         else:
             if dry_run:
                 actions.append(f"Would append unb-consultant block to {agents_path}")
@@ -191,51 +223,65 @@ def init_project(
                 )
                 actions.append(f"Created {agents_path}")
 
-    # ─── Step 4: Offer catalog/skill-gen for registered experts ───
-    if not dry_run and not auto:
+    # ─── Step 4: Catalog + skill-gen for experts without local skills ───
+    if not dry_run:
         config = get_config()
         experts = config.list_experts()
         if experts:
             expert_names = list(experts.keys())
-            print(f"\nFound registered expert(s): {', '.join(expert_names)}")
-            resp = input("  Generate catalog and local skill for these experts? [y/N] ").strip().lower()
-            if resp in ("y", "yes"):
-                for ename in expert_names:
-                    print(f"\n  Processing '{ename}'...")
-                    # Generate catalog
-                    print(f"    Catalog... ", end="", flush=True)
-                    from unb_consultant.catalog import generate_catalog
-                    cat_result = generate_catalog(name=ename)
-                    if cat_result.get("status") == "ok":
-                        print("OK")
-                        actions.append(f"Generated catalog for '{ename}'")
-                    else:
-                        print(f"FAILED: {cat_result.get('error', 'Unknown error')}")
-                        return {"status": "error", "error": f"Catalog generation failed for '{ename}': {cat_result.get('error', 'Unknown')}"}
+            # Only process experts that don't have a local skill yet
+            missing = _missing_skills(skills_base, expert_names)
 
-                    # Generate skill
-                    print(f"    Skill... ", end="", flush=True)
-                    from unb_consultant.skill_gen import generate_skill
-                    skill_result = generate_skill(name=ename, auto=True)
-                    if skill_result.get("status") == "ok":
-                        print("OK")
-                        actions.append(f"Generated skill for '{ename}'")
-                    else:
-                        print(f"FAILED: {skill_result.get('error', 'Unknown error')}")
-                        return {"status": "error", "error": f"Skill generation failed for '{ename}': {skill_result.get('error', 'Unknown')}"}
+            if missing:
+                if auto:
+                    proceed = True
+                else:
+                    print(f"\nFound registered expert(s): {', '.join(expert_names)}")
+                    print(f"Expert(s) without local skill: {', '.join(missing)}")
+                    resp = input("  Generate catalog and local skill for these experts? [y/N] ").strip().lower()
+                    proceed = resp in ("y", "yes")
 
-                # Regenerate AGENTS.md block with updated skill list
-                agents_path = project / "AGENTS.md"
-                new_block = _agents_block_with_skills()
-                if agents_path.exists():
-                    content = agents_path.read_text(encoding="utf-8", errors="replace")
-                    if AGENTS_UNB_BLOCK_HEADER in content:
-                        # Replace existing block (skipped earlier, but now we have skills)
-                        import re
-                        pattern = re.compile(rf"\n{re.escape(AGENTS_UNB_BLOCK_HEADER)}.+?(?=\n##|\Z)", re.DOTALL)
-                        new_content = pattern.sub(new_block, content)
-                        agents_path.write_text(new_content, encoding="utf-8")
-                        actions.append("Updated AGENTS.md with skill references")
+                if proceed:
+                    for ename in missing:
+                        print(f"\n  Processing '{ename}'...")
+                        # Generate catalog
+                        print(f"    Catalog... ", end="", flush=True)
+                        from unb_consultant.catalog import generate_catalog
+                        cat_result = generate_catalog(name=ename)
+                        if cat_result.get("status") == "ok":
+                            print("OK")
+                            actions.append(f"Generated catalog for '{ename}'")
+                        else:
+                            print(f"FAILED: {cat_result.get('error', 'Unknown error')}")
+                            return {"status": "error", "error": f"Catalog generation failed for '{ename}': {cat_result.get('error', 'Unknown')}"}
+
+                        # Generate skill
+                        print(f"    Skill... ", end="", flush=True)
+                        from unb_consultant.skill_gen import generate_skill
+                        skill_result = generate_skill(name=ename, auto=True, project_path=str(project))
+                        if skill_result.get("status") == "ok":
+                            print("OK")
+                            actions.append(f"Generated skill for '{ename}'")
+                        else:
+                            print(f"FAILED: {skill_result.get('error', 'Unknown error')}")
+                            return {"status": "error", "error": f"Skill generation failed for '{ename}': {skill_result.get('error', 'Unknown')}"}
+
+                    # Update AGENTS.md with updated skill list
+                    agents_path = project / "AGENTS.md"
+                    new_block = _agents_block_with_skills()
+                    if agents_path.exists():
+                        content = agents_path.read_text(encoding="utf-8", errors="replace")
+                        if AGENTS_UNB_BLOCK_HEADER in content:
+                            import re
+                            pattern = re.compile(rf"\n{re.escape(AGENTS_UNB_BLOCK_HEADER)}.+?(?=\n##|\Z)", re.DOTALL)
+                            new_content = pattern.sub(new_block, content)
+                            agents_path.write_text(new_content, encoding="utf-8")
+                            actions.append("Updated AGENTS.md with skill references")
+                else:
+                    if not auto:
+                        print("  Skipped catalog/skill-gen.")
+            else:
+                actions.append("All registered experts already have local skills. Nothing to generate.")
 
     # ─── Summary ───
     if dry_run:
