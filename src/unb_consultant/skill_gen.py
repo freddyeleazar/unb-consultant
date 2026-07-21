@@ -121,8 +121,7 @@ _SKILL_TEMPLATE = """---
 name: unb-{name}
 description: >
   NotebookLM expert for {description}.
-  Ответы с цитатами из источников.
-  Создан через unb-consultant.
+  Created via unb-consultant.
 ---
 
 # {title}
@@ -131,7 +130,7 @@ description: >
 `{notebook_id}`
 
 ## Thematic Catalog
-{catalog}
+See `catalog.md` in this directory for the full thematic catalog.
 
 ## Protocol
 - Only act when the user explicitly asks.
@@ -229,13 +228,12 @@ def generate_skill(
                 dry_run=dry_run,
             )
 
-    # Generate SKILL.md content
+    # Generate SKILL.md content (references catalog.md, does not embed catalog)
     content = _SKILL_TEMPLATE.format(
         name=name,
         description=description,
         title=title,
         notebook_id=notebook_id,
-        catalog=catalog_text,
     )
 
     if dry_run:
@@ -246,8 +244,24 @@ def generate_skill(
         }
 
     skill_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write SKILL.md
     skill_path.write_text(content, encoding="utf-8")
     print(_("skill_created", path=str(skill_path)))
+
+    # Write catalog.md alongside SKILL.md
+    catalog_path = skill_path.parent / "catalog.md"
+    if catalog_text and "*No catalog generated" not in catalog_text:
+        catalog_path.write_text(f"# Thematic Catalog: {title}\n\n{catalog_text}", encoding="utf-8")
+        print(f"  Catalog: {catalog_path}")
+    else:
+        # Write a placeholder catalog
+        catalog_path.write_text(
+            f"# Thematic Catalog: {title}\n\n"
+            f"*No catalog generated yet. Run: unb catalog \"{name}\"*\n",
+            encoding="utf-8",
+        )
+        print(f"  Catalog placeholder: {catalog_path}")
 
     return {
         "status": "ok",

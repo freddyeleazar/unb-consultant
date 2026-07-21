@@ -89,7 +89,7 @@ def generate_catalog(
         "catalog": {
             "generated_at": __import__("datetime").datetime.now().isoformat(),
             "conversation_id": conversation_id,
-            "text": catalog_text[:500],  # Store preview
+            "text": catalog_text,
         }
     })
 
