@@ -90,11 +90,17 @@ def _agents_block_with_skills() -> str:
 
 
 def _missing_skills(skills_base: Path, expert_names: list[str]) -> list[str]:
-    """Return expert names that don't have a local skill yet."""
+    """Return expert names that don't have a complete local skill yet.
+    
+    An expert is considered 'complete' when both SKILL.md and catalog.md exist.
+    Missing catalog.md triggers regeneration of both files.
+    """
     missing = []
     for name in expert_names:
-        skill_path = skills_base / f"unb-{name}" / "SKILL.md"
-        if not skill_path.exists():
+        skill_dir = skills_base / f"unb-{name}"
+        skill_md = skill_dir / "SKILL.md"
+        catalog_md = skill_dir / "catalog.md"
+        if not skill_md.exists() or not catalog_md.exists():
             missing.append(name)
     return missing
 
