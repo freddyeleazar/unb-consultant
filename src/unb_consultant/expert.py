@@ -69,7 +69,6 @@ def create_expert(
                     raw_files.extend(sorted(d.glob(ext)))
                 raw_files = list(dict.fromkeys(raw_files))
         if raw_files:
-            from unb_consultant.merger import plan_merge, print_plan_summary
             target = get_target_source_count()
             url_count = len(urls) if urls else 0
             file_target = max(1, target - url_count)
