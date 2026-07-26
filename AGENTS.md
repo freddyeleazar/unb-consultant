@@ -77,12 +77,14 @@ The file `.opencode/skills/unb-consultant/SKILL.md` has the full reference.
 
 When preparing a release:
 
-1. **Update CHANGELOG.md** — move items from [Unreleased] to a new version
+1. **Review README.md** — ensure it reflects the latest features, commands,
+   and usage examples
+2. **Update CHANGELOG.md** — move items from [Unreleased] to a new version
    entry following Keep a Changelog format
-2. **Bump version** in `pyproject.toml` and `src/unb_consultant/__init__.py`
-3. **Commit** using Conventional Commits: `chore(vX.Y.Z): release`
-4. **Tag** the commit: `git tag vX.Y.Z`
-5. **Push** both branch and tags: `git push && git push --tags`
+3. **Bump version** in `pyproject.toml` and `src/unb_consultant/__init__.py`
+4. **Commit** using Conventional Commits: `chore(vX.Y.Z): release`
+5. **Tag** the commit: `git tag vX.Y.Z`
+6. **Push** both branch and tags: `git push && git push --tags`
 
 The GitHub Action (`.github/workflows/publish.yml`) publishes to PyPI
 automatically when a `v*` tag is pushed.

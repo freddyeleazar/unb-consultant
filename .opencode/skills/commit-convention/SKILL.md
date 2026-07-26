@@ -37,10 +37,13 @@ Use the version number in parentheses for release commits:
 
 ## Release workflow
 
-1. Update `CHANGELOG.md` with the new version entry
-2. Bump version in `pyproject.toml` and `src/unb_consultant/__init__.py`
-3. Commit: `chore(vX.Y.Z): release`
-4. Create tag: `git tag vX.Y.Z`
-5. Push: `git push && git push --tags`
+1. **Review README.md** — ensure it reflects the latest features, commands,
+   and usage examples
+2. **Update CHANGELOG.md** — move items from [Unreleased] to a new version
+   entry following Keep a Changelog format
+3. **Bump version** in `pyproject.toml` and `src/unb_consultant/__init__.py`
+4. **Commit** using Conventional Commits: `chore(vX.Y.Z): release`
+5. **Tag** the commit: `git tag vX.Y.Z`
+6. **Push** both branch and tags: `git push && git push --tags`
 
 The GitHub Action will auto-publish to PyPI when a `v*` tag is pushed.
