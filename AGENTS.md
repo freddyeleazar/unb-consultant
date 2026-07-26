@@ -46,12 +46,15 @@ First check if unb-consultant is configured in this project:
 | Check auth | `unb auth check --test` |
 | Refresh auth | `unb auth refresh` |
 | Suggest domain | `unb suggest cvss musicxml skyrim` |
-| Create expert | `unb expert create <name> --url "..." [--auto]` |
-| List experts | `unb expert list` |
+| Create expert | `unb expert create <name> --url "..." [--file ...] [--auto]` |
+| List experts | `unb expert list [--json]` |
 | Ask expert | `unb ask <name> "<question>" [--json]` |
 | Add sources | `unb source add <name> --url "..."` |
 | Generate catalog | `unb catalog <name>` |
-| Generate skill | `unb skill-gen <name>` |
+| Generate skill | `unb skill-gen <name> [--auto]` |
+| Init project | `unb init [--auto]` |
+| Interactive setup | `unb setup` |
+| Start MCP server | `unb mcp` |
 
 ## Language
 
@@ -69,3 +72,17 @@ Available CLI commands (for models without MCP support):
 | Suggest domain | `unb suggest <keyword>` |
 
 The file `.opencode/skills/unb-consultant/SKILL.md` has the full reference.
+
+## Release Workflow
+
+When preparing a release:
+
+1. **Update CHANGELOG.md** — move items from [Unreleased] to a new version
+   entry following Keep a Changelog format
+2. **Bump version** in `pyproject.toml` and `src/unb_consultant/__init__.py`
+3. **Commit** using Conventional Commits: `chore(vX.Y.Z): release`
+4. **Tag** the commit: `git tag vX.Y.Z`
+5. **Push** both branch and tags: `git push && git push --tags`
+
+The GitHub Action (`.github/workflows/publish.yml`) publishes to PyPI
+automatically when a `v*` tag is pushed.
