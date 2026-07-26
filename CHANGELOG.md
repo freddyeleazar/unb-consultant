@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Playwright universal URL processor: all URLs are scraped via stealth
   Playwright (text + PDF) instead of being sent directly to NotebookLM,
   bypassing Googlebot limitations (Cloudflare, Anubis, JS-heavy pages)
+- **Multimodal PDF support:** NotebookLM processes images embedded in PDFs
+  visually (confirmed empirically — hand-drawn diagrams, colors, handwritten
+  codes are read correctly, not just via OCR). Each scraped page generates
+  both a TEXT source (clean text) and a PDF source (with images) so
+  NotebookLM can leverage its built-in multimodal understanding
 - `--no-scrape` flag for `unb expert create` and `unb source add` to
   skip Playwright and use direct URL upload (original behaviour)
 - Google Cache fallback when Playwright fails
