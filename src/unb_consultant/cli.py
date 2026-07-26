@@ -143,9 +143,11 @@ def expert():
               help="Preview merge plan without creating")
 @click.option("--force", is_flag=True,
               help="Overwrite existing expert with same name")
+@click.option("--no-scrape", is_flag=True,
+              help="Skip Playwright scraping, upload URLs directly")
 @click.option("--yes", is_flag=True, hidden=True)
 def expert_create(name, desc, url, files, directory, drive_doc,
-                  auto, dry_run, force, yes):
+                  auto, dry_run, force, no_scrape, yes):
     """Create a new NotebookLM expert.
 
     NAME: Expert name (lowercase letters, numbers, and hyphens only).
@@ -161,6 +163,7 @@ def expert_create(name, desc, url, files, directory, drive_doc,
         dry_run=dry_run,
         force=force,
         yes=yes,
+        no_scrape=no_scrape,
     )
 
     if result.get("status") == "error":
@@ -249,8 +252,10 @@ def source():
 @click.option("--directory", type=click.Path(exists=True, file_okay=False),
               help="Directory with source files")
 @click.option("--drive-doc", multiple=True, help="Google Drive document ID")
+@click.option("--no-scrape", is_flag=True,
+              help="Skip Playwright scraping, upload URLs directly")
 @click.option("--yes", is_flag=True, help="Skip confirmation")
-def source_add(name, url, files, directory, drive_doc, yes):
+def source_add(name, url, files, directory, drive_doc, no_scrape, yes):
     """Add sources to an existing expert.
 
     NAME: Expert name to add sources to.
@@ -262,6 +267,7 @@ def source_add(name, url, files, directory, drive_doc, yes):
         directory=Path(directory) if directory else None,
         drive_docs=list(drive_doc) if drive_doc else None,
         yes=yes,
+        no_scrape=no_scrape,
     )
 
     if result.get("status") == "error":

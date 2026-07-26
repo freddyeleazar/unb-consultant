@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "unb-consultant"
-version = "0.2.1"
+version = "0.3.0"
 description = "Universal NotebookLM-Based Consultant - create and query AI experts via NotebookLM"
 readme = "README.md"
 license = {text = "MIT"}
@@ -38,6 +38,7 @@ unb = "unb_consultant.cli:cli"
 [project.optional-dependencies]
 browser = ["notebooklm-py[browser]"]
 cookies = ["notebooklm-py[cookies]"]
+scraping = ["playwright>=1.50.0"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",

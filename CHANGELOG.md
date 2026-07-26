@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-25
+
+### Added
+- Playwright universal URL processor: all URLs are scraped via stealth
+  Playwright (text + PDF) instead of being sent directly to NotebookLM,
+  bypassing Googlebot limitations (Cloudflare, Anubis, JS-heavy pages)
+- `--no-scrape` flag for `unb expert create` and `unb source add` to
+  skip Playwright and use direct URL upload (original behaviour)
+- Google Cache fallback when Playwright fails
+- New optional extra: `pip install 'unb-consultant[scraping]'` plus
+  `playwright install chromium`
+
 ## [0.2.1] - 2026-07-25
 
 ### Added

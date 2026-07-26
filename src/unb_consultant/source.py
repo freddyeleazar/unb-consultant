@@ -5,12 +5,15 @@ to an already-created NotebookLM expert.
 """
 
 import json
+import os
+import re
 import time
 from pathlib import Path
 
 from unb_consultant.auth import _notebooklm_cmd, auth_check
 from unb_consultant.config import get_config
 from unb_consultant.i18n import _
+from unb_consultant.page_scraper import scrape_page_sync_with_fallback
 from unb_consultant.tier import get_source_limit
 
 
@@ -21,6 +24,7 @@ def add_sources(
     directory: Path | None = None,
     drive_docs: list[str] | None = None,
     yes: bool = False,
+    no_scrape: bool = False,
 ) -> dict:
     """Add sources to an existing expert.
     
@@ -82,6 +86,7 @@ def add_sources(
     print(_("sources_uploading", count=len(to_add)))
     uploaded = []
     failed = []
+    scrape_failed_urls = []
 
     for i, src in enumerate(to_add):
         label = f"[{i+1}/{len(to_add)}]"
@@ -89,27 +94,81 @@ def add_sources(
             print(f"  {label} {Path(src['value']).name}... ", end="", flush=True)
             r = _notebooklm_cmd("source", "add", "-n", notebook_id, src["value"], "--json")
         elif src["type"] == "url":
-            print(f"  {label} {src['value'][:60]}... ", end="", flush=True)
-            r = _notebooklm_cmd("source", "add", "-n", notebook_id, src["value"], "--json")
+            url_val = src["value"]
+            short_url = url_val[:60]
+            if no_scrape:
+                print(f"  {label} {short_url}... ", end="", flush=True)
+                r = _notebooklm_cmd("source", "add", "-n", notebook_id, url_val, "--json")
+            else:
+                print(f"  {label} {short_url}... ", end="", flush=True)
+                text, pdf, used_fallback = scrape_page_sync_with_fallback(url_val)
+
+                if text:
+                    text_prefix = f"page_{re.sub(r'[^a-zA-Z0-9]+', '_', url_val[:40])}"
+                    r_text = _notebooklm_cmd("source", "add", "-n", notebook_id,
+                                             "--type", "text", "--title", text_prefix,
+                                             text, "--json")
+                    if r_text and r_text.returncode == 0:
+                        try:
+                            sd = json.loads(r_text.stdout)
+                            sid = sd.get("source", {}).get("id", "?")
+                            print(f"TEXT OK ({sid[:8]})", end="")
+                            uploaded.append({"id": sid, "type": "scraped_text", "value": url_val})
+                        except json.JSONDecodeError:
+                            print("TEXT OK", end="")
+                            uploaded.append({"id": "?", "type": "scraped_text", "value": url_val})
+                    else:
+                        print("TEXT FAILED", end="")
+
+                    if pdf:
+                        r_pdf = _notebooklm_cmd("source", "add", "-n", notebook_id, pdf, "--json")
+                        try:
+                            os.remove(pdf)
+                        except Exception:
+                            pass
+                        if r_pdf and r_pdf.returncode == 0:
+                            try:
+                                sd = json.loads(r_pdf.stdout)
+                                sid = sd.get("source", {}).get("id", "?")
+                                print(f" + PDF OK ({sid[:8]})")
+                                uploaded.append({"id": sid, "type": "scraped_pdf", "value": url_val})
+                            except json.JSONDecodeError:
+                                print(" + PDF OK")
+                                uploaded.append({"id": "?", "type": "scraped_pdf", "value": url_val})
+                        else:
+                            print(" + PDF FAILED")
+                    else:
+                        print()
+                elif used_fallback:
+                    print(f"  {label} {short_url}... SCRAPE FAILED, adding directly... ", end="", flush=True)
+                    r = _notebooklm_cmd("source", "add", "-n", notebook_id, url_val, "--json")
+                    scrape_failed_urls.append(url_val)
         elif src["type"] == "drive_doc":
             print(f"  {label} Drive doc... ", end="", flush=True)
             r = _notebooklm_cmd("source", "add-drive", "-n", notebook_id, src["value"], "--json")
 
-        if r and r.returncode == 0:
-            try:
-                sd = json.loads(r.stdout)
-                sid = sd.get("source", {}).get("id", "?")
-                print(f"OK ({sid[:8]})")
-                uploaded.append({"id": sid, "type": src["type"], "value": src["value"]})
-            except json.JSONDecodeError:
-                print("OK")
-                uploaded.append({"id": "?", "type": src["type"], "value": src["value"]})
-        else:
-            err = (r.stderr.strip() or r.stdout.strip() or "Unknown error")[:80] if r else "No response"
-            print(f"FAILED: {err}")
-            failed.append({"type": src["type"], "value": src["value"], "error": err})
+        if src["type"] != "url" or no_scrape:
+            if r and r.returncode == 0:
+                try:
+                    sd = json.loads(r.stdout)
+                    sid = sd.get("source", {}).get("id", "?")
+                    print(f"OK ({sid[:8]})")
+                    uploaded.append({"id": sid, "type": src["type"], "value": src["value"]})
+                except json.JSONDecodeError:
+                    print("OK")
+                    uploaded.append({"id": "?", "type": src["type"], "value": src["value"]})
+            else:
+                err = (r.stderr.strip() or r.stdout.strip() or "Unknown error")[:80] if r else "No response"
+                print(f"FAILED: {err}")
+                failed.append({"type": src["type"], "value": src["value"], "error": err})
 
         time.sleep(0.5)
+
+    if scrape_failed_urls:
+        print()
+        print("[!] The following URLs could not be scraped and were added directly:")
+        for u in scrape_failed_urls:
+            print(f"  - {u}")
 
     # Update config
     existing_sources = expert.get("sources", [])
