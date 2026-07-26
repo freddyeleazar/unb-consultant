@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Repository CI/CD: automated PyPI publishing via GitHub Actions on tags
+- Welcome message after `unb login` or `unb setup` when no experts exist,
+  showing examples and a tip about natural-language agent support
 
 ## [0.2.0] - 2026-07-20
 

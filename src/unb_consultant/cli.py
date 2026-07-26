@@ -41,6 +41,19 @@ def cli(lang):
 
 # ─── Auth commands ───
 
+def _show_welcome_if_empty():
+    """Show welcome message if no experts are registered."""
+    config = get_config()
+    if config.expert_count() == 0:
+        click.echo()
+        click.echo(_("welcome_title"))
+        click.echo(_("welcome_no_experts"))
+        click.echo(_("welcome_example_url"))
+        click.echo(_("welcome_example_file"))
+        click.echo()
+        click.echo(_("welcome_agent_tip"))
+
+
 @cli.command()
 @click.option("--browser-cookies", type=str,
               help="Browser name to extract cookies from (chrome, edge, firefox)")
@@ -54,6 +67,7 @@ def login(browser_cookies):
         m = re.search(r'Account:\s*(\S+@\S+)', detail)
         email = m.group(1) if m else "unknown"
         click.echo(_("auth_login_ok", email=email))
+        _show_welcome_if_empty()
     else:
         click.echo(f"{_('error')}: {result.get('error', 'Login failed')}", err=True)
         sys.exit(1)
@@ -467,6 +481,10 @@ def setup():
 
     # Config path
     click.echo(f"\nConfig: {Path.home() / '.unb-consultant' / 'config.json'}")
+
+    # Welcome if first run
+    if result.get("status") == "ok" and result.get("checks", {}).get("token_fetch"):
+        _show_welcome_if_empty()
 
 
 # ─── Tier info command ───

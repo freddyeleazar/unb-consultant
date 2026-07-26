@@ -97,6 +97,13 @@ _STRINGS = {
         "suggest_skill_gen": "Create a local SKILL.md and update AGENTS.md for this project",
         "next_steps": "Next steps:",
 
+        # Welcome / first-run
+        "welcome_title": "Welcome to unb-consultant!",
+        "welcome_no_experts": "You don't have any experts yet. Create your first one:",
+        "welcome_example_url": '  unb expert create "my-expert" --url "https://example.com/docs"',
+        "welcome_example_file": '  unb expert create "my-expert" --file "./document.pdf"',
+        "welcome_agent_tip": 'Tip: You can also describe what you need in natural language,\n      and I (the agent) will find the sources and create the expert.\n      Example: "Create an expert about Skyrim modding using the UESP wiki"',
+
         # Generic errors
         "error_network": "Network error: {msg}. Check your connection.",
         "error_timeout": "Operation timed out after {seconds}s.",
@@ -190,6 +197,13 @@ _STRINGS = {
         "suggest_catalog": "Generar un cat\u00e1logo tem\u00e1tico de lo que sabe este experto",
         "suggest_skill_gen": "Crear un SKILL.md local y actualizar AGENTS.md para este proyecto",
         "next_steps": "Siguientes pasos:",
+
+        # Welcome / first-run
+        "welcome_title": "¡Bienvenido a unb-consultant!",
+        "welcome_no_experts": "No tienes expertos aún. Crea tu primero:",
+        "welcome_example_url": '  unb expert create "mi-experto" --url "https://ejemplo.com/docs"',
+        "welcome_example_file": '  unb expert create "mi-experto" --file "./documento.pdf"',
+        "welcome_agent_tip": 'Consejo: También puedes describir lo que necesitas en lenguaje natural,\n      y yo (el agente) encontraré las fuentes y crearé el experto.\n      Ejemplo: "Crea un experto sobre modding de Skyrim usando la wiki UESP"',
 
         # Generic errors
         "error_network": "Error de red: {msg}. Verifica tu conexión.",
