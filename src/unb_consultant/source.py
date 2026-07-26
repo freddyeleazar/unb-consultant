@@ -105,9 +105,15 @@ def add_sources(
 
                 if text:
                     text_prefix = f"page_{re.sub(r'[^a-zA-Z0-9]+', '_', url_val[:40])}"
+                    _tmp_text = Path(tempfile.mktemp(suffix=".txt"))
+                    _tmp_text.write_text(text, encoding="utf-8")
                     r_text = _notebooklm_cmd("source", "add", "-n", notebook_id,
-                                             "--type", "text", "--title", text_prefix,
-                                             text, "--json")
+                                             "--title", text_prefix,
+                                             str(_tmp_text), "--json")
+                    try:
+                        _tmp_text.unlink()
+                    except Exception:
+                        pass
                     if r_text and r_text.returncode == 0:
                         try:
                             sd = json.loads(r_text.stdout)

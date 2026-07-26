@@ -4,11 +4,11 @@ Scrapes a URL by launching a headless Chromium browser, extracts clean text,
 and generates a PDF. Falls back to Google Cache if Playwright fails.
 """
 
-import asyncio
 import os
 import random
 import re
 import tempfile
+import time as _time
 from pathlib import Path
 
 import httpx
@@ -75,20 +75,20 @@ def _warn_playwright_missing():
         _PLAYWRIGHT_WARNED = True
 
 
-async def _scrape_page_playwright(url: str, timeout_ms: int = 60000) -> tuple:
-    """Scrape a URL using stealth Playwright.
+def _scrape_page_sync(url: str, timeout_ms: int = 60000) -> tuple:
+    """Scrape a URL using stealth Playwright (sync API, works on all platforms).
 
     Returns (text_content, pdf_path_or_None).
     """
-    from playwright.async_api import async_playwright
+    from playwright.sync_api import sync_playwright
 
     text_content = None
     pdf_path = None
 
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
         try:
-            context = await browser.new_context(
+            context = browser.new_context(
                 user_agent=random.choice(USER_AGENTS),
                 viewport=random.choice(VIEWPORTS),
                 locale="es-ES",
@@ -96,23 +96,23 @@ async def _scrape_page_playwright(url: str, timeout_ms: int = 60000) -> tuple:
                 extra_http_headers=dict(HEADERS),
                 bypass_csp=True,
             )
-            page = await context.new_page()
-            await page.add_init_script(STEALTH_SCRIPT)
+            page = context.new_page()
+            page.add_init_script(STEALTH_SCRIPT)
 
-            await page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
             try:
-                await page.wait_for_load_state("networkidle", timeout=15000)
+                page.wait_for_load_state("networkidle", timeout=15000)
             except Exception:
                 pass
 
-            await asyncio.sleep(1 + random.random() * 2)
+            _time.sleep(1 + random.random() * 2)
 
-            await page.mouse.move(random.randint(100, 500), random.randint(100, 500))
-            await page.evaluate("window.scrollTo({ top: 300, behavior: 'instant' })")
-            await asyncio.sleep(0.3)
-            await page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
+            page.mouse.move(random.randint(100, 500), random.randint(100, 500))
+            page.evaluate("window.scrollTo({ top: 300, behavior: 'instant' })")
+            _time.sleep(0.3)
+            page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
 
-            text_content = await page.evaluate("""() => {
+            text_content = page.evaluate("""() => {
                 const main = document.querySelector('article') || document.querySelector('main');
                 if (main) return main.innerText;
                 const c = document.body.cloneNode(true);
@@ -123,20 +123,20 @@ async def _scrape_page_playwright(url: str, timeout_ms: int = 60000) -> tuple:
             }""")
 
             if not text_content or len(text_content.strip()) < 50:
-                await asyncio.sleep(3)
-                text_content = await page.evaluate("document.body.innerText || ''")
+                _time.sleep(3)
+                text_content = page.evaluate("document.body.innerText || ''")
 
             if text_content and len(text_content.strip()) >= 50:
                 tmp_pdf = Path(tempfile.mktemp(suffix=".pdf"))
-                await page.pdf(path=str(tmp_pdf), format="A4", print_background=True)
+                page.pdf(path=str(tmp_pdf), format="A4", print_background=True)
                 pdf_path = str(tmp_pdf)
         finally:
-            await browser.close()
+            browser.close()
 
     return text_content, pdf_path
 
 
-async def _try_google_cache(url: str) -> str | None:
+def _try_google_cache(url: str) -> str | None:
     """Fallback: fetch text from Google Cache."""
     cache_url = f"https://webcache.googleusercontent.com/search?q=cache:{url}"
     try:
@@ -163,7 +163,7 @@ def scrape_page_sync(url: str, timeout_ms: int = 60000) -> tuple:
         return None, None
 
     try:
-        text, pdf = asyncio.run(_scrape_page_playwright(url, timeout_ms))
+        text, pdf = _scrape_page_sync(url, timeout_ms)
     except Exception:
         text, pdf = None, None
 
@@ -176,7 +176,7 @@ def scrape_page_sync(url: str, timeout_ms: int = 60000) -> tuple:
         except Exception:
             pass
 
-    cache_text = asyncio.run(_try_google_cache(url))
+    cache_text = _try_google_cache(url)
     if cache_text and len(cache_text.strip()) >= 50:
         return cache_text, None
 

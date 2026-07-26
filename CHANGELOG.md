@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-25
+
+### Fixed
+- Windows compatibility: replaced `async_playwright()` with `sync_playwright()`
+  to avoid event-loop conflicts with Chromium subprocesses
+- Text source upload now writes to a temporary file instead of passing inline
+  text, avoiding shell argument limits and `--type` flag issues with
+  notebooklm-py
+- `_wait_for_sources()` no longer blocks for 10 minutes when a source has
+  `status: "error"` — exits early instead
+
 ## [0.3.0] - 2026-07-25
 
 ### Added

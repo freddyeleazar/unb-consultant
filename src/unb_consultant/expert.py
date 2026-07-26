@@ -199,9 +199,15 @@ def create_expert(
 
                 if text:
                     text_prefix = f"page_{re.sub(r'[^a-zA-Z0-9]+', '_', url_val[:40])}"
+                    _tmp_text = Path(tempfile.mktemp(suffix=".txt"))
+                    _tmp_text.write_text(text, encoding="utf-8")
                     r_text = _notebooklm_cmd("source", "add", "-n", notebook_id,
-                                             "--type", "text", "--title", text_prefix,
-                                             text, "--json")
+                                             "--title", text_prefix,
+                                             str(_tmp_text), "--json")
+                    try:
+                        _tmp_text.unlink()
+                    except Exception:
+                        pass
                     if r_text and r_text.returncode == 0:
                         try:
                             sd = json.loads(r_text.stdout)
@@ -391,9 +397,9 @@ def _wait_for_sources(notebook_id: str, timeout: int = 600, poll_interval: int =
                 sources = data.get("sources", [])
                 if all(s.get("status") == "ready" for s in sources):
                     return True
-                processing = sum(1 for s in sources if s.get("status") != "ready")
-                if processing > 0:
-                    pass  # Still waiting
+                errors = [s for s in sources if s.get("status") == "error"]
+                if errors:
+                    return True
             except json.JSONDecodeError:
                 pass
         _time.sleep(poll_interval)
