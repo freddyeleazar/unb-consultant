@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-25
+
+### Added
+- Automatic re-authentication on auth errors: when a NotebookLM command
+  fails due to expired/invalid authentication, unb-consultant now
+  automatically attempts `refresh()` followed by `login --browser-cookies
+  chrome`, with a single retry limit to prevent infinite loops
+
 ## [0.3.1] - 2026-07-25
 
 ### Fixed

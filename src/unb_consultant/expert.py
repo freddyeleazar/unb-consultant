@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-from unb_consultant.auth import _notebooklm_cmd, auth_check
+from unb_consultant.auth import _notebooklm_cmd_with_reauth as _notebooklm_cmd, auth_check
 from unb_consultant.config import get_config
 from unb_consultant.i18n import _
 from unb_consultant.merger import plan_merge, execute_merge, print_plan_summary

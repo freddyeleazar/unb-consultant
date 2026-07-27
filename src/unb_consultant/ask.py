@@ -4,7 +4,7 @@ Ask questions to an existing NotebookLM expert and get cited answers.
 """
 
 import json
-from unb_consultant.auth import _notebooklm_cmd
+from unb_consultant.auth import _notebooklm_cmd_with_reauth as _notebooklm_cmd
 from unb_consultant.config import get_config
 from unb_consultant.i18n import _
 

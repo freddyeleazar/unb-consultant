@@ -10,7 +10,7 @@ import re
 import time
 from pathlib import Path
 
-from unb_consultant.auth import _notebooklm_cmd, auth_check
+from unb_consultant.auth import _notebooklm_cmd_with_reauth as _notebooklm_cmd, auth_check
 from unb_consultant.config import get_config
 from unb_consultant.i18n import _
 from unb_consultant.page_scraper import scrape_page_sync_with_fallback

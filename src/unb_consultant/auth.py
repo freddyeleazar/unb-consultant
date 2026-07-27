@@ -102,3 +102,59 @@ def refresh() -> dict:
         return json.loads(result.stdout)
     except json.JSONDecodeError:
         return {"status": "ok", "detail": "Refresh completed"}
+
+
+_AUTH_PATTERNS = [
+    "authentication expired",
+    "redirected to: accounts.google.com",
+    "not authenticated",
+    "login to re-authenticate",
+    "unexpected error: authentication",
+]
+
+
+def _is_auth_error(result: subprocess.CompletedProcess) -> bool:
+    """Check if a notebooklm command failed due to authentication issues."""
+    if result.returncode == 0:
+        return False
+    output = ((result.stderr or "") + (result.stdout or "")).lower()
+    return any(p in output for p in _AUTH_PATTERNS)
+
+
+_reauth_attempted = False
+
+
+def _notebooklm_cmd_with_reauth(*args, max_retries: int = 1) -> subprocess.CompletedProcess:
+    """Run a notebooklm command with automatic re-authentication on auth errors.
+    
+    On auth failure:
+        1. Try auth refresh (silent cookie renewal)
+        2. Try login with browser cookies (Chrome)
+        3. If all fail, return the original error
+    
+    Uses a global flag to prevent infinite re-auth loops.
+    """
+    global _reauth_attempted
+
+    result = _notebooklm_cmd(*args)
+
+    if _is_auth_error(result) and max_retries > 0 and not _reauth_attempted:
+        _reauth_attempted = True
+
+        ref_result = refresh()
+        if ref_result.get("status") == "ok":
+            result = _notebooklm_cmd(*args)
+            if not _is_auth_error(result):
+                _reauth_attempted = False
+                return result
+
+        login_result = login(browser_cookies="chrome")
+        if login_result.get("status") == "ok":
+            result = _notebooklm_cmd(*args)
+            if not _is_auth_error(result):
+                _reauth_attempted = False
+                return result
+
+        _reauth_attempted = False
+
+    return result
